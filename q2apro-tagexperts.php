@@ -4,10 +4,9 @@
 	Plugin Author URI: http://www.q2apro.com/
 	License: http://www.gnu.org/licenses/gpl.html
 */
-
+	
 	class q2apro_tagexperts
 	{
-		
 		var $directory;
 		var $urltoroot;
 		
@@ -46,6 +45,8 @@
 			// get param from URL
 			$tag = qa_get('tag');
 			
+			$in['tags']=qa_get_tags_field_value('tags');
+			
 			// start
 			$qa_content = qa_content_prepare();
 			$qa_content['custom'] = '';
@@ -53,6 +54,7 @@
 			$qa_content['title'] = 'Tag Experts';
 			
 			// return if not admin
+			
 			$level=qa_get_logged_in_level();
 			if ($level<QA_USER_LEVEL_ADMIN) // or QA_USER_LEVEL_EDITOR, QA_USER_LEVEL_EXPERT
 			{
@@ -60,21 +62,16 @@
 				return $qa_content;
 			}
 			
-			if(empty($tag))
+			if(empty($tag) && empty($in['tags']) )
 			{
-				$qa_content['error'] = 'No tag specified.';
-				$qa_content['custom'] .= '
-				<form method="GET" class="newtagform">
-					<p>
-						Enter a tag: 
-					</p>
-					<input type="text" name="tag" placeholder="Enter tag here" autofocus>
-					<button type="button">Send</button>
-				</form>
-				';
+				self::insertTagSearchBox( $qa_content, 'Enter a tag here:', 'No tag specified.' );
 				return $qa_content;
 			}
 
+			if(empty($tag))
+			{
+				$tag = $in['tags'][0]; //TODO: make it work for multiple tags
+			}
 			$qa_content['title'] = 'Experts for <a target="_blank" href="'.qa_path('tag').'/'.$tag.'">"'.$tag.'"</a>';
 			
 			// read all questions with specified tag 
@@ -87,16 +84,7 @@
 			
 			if(empty($tagsQuestions))
 			{
-				$qa_content['error'] = 'Sorry, no tag found.';
-				$qa_content['custom'] .= '
-				<form method="GET" class="newtagform">
-					<p>
-						Enter another tag: 
-					</p>
-					<input type="text" name="tag" placeholder="Enter tag here" autofocus>
-					<button type="button">Send</button>
-				</form>
-				';
+				self::insertTagSearchBox( $qa_content, 'Enter another tag:', 'Sorry, no tag found.' );
 				return $qa_content;
 			}
 
@@ -176,15 +164,7 @@
 			</table>
 			';
 			
-			$qa_content['custom'] .= '
-			<form method="GET" class="newtagform">
-				<p>
-					Choose another tag: 
-				</p>
-				<input type="text" name="tag" placeholder="Enter tag here">
-				<button type="button">Send</button>
-			</form>
-			';
+			self::insertTagSearchBox( $qa_content, 'Select another tag:', '' );
 			
 			// simple jquery table sort, credits to https://stackoverflow.com/a/19947532/1066234
 			$qa_content['custom'] .= "
@@ -253,6 +233,32 @@
 			';
 			
 			return $qa_content;
+		}
+		
+		function insertTagSearchBox( &$qa_content, $label, $errorMsg )
+		{
+			$qa_content['form'] = array(
+					'tags' => 'name="tagexpertselector" method="post" action="'.qa_self_html().'"',
+					'style' => 'tall',
+					'buttons' => array(
+						'ask' => array(
+							'tags' => 'onclick="qa_show_waiting_after(this, false); "',
+							'label' => 'Show Experts',
+						),
+					)
+				);
+		
+			$qa_content['error'] = $errorMsg;
+			
+			$completetags = array();
+			if( qa_opt('do_complete_tags') )
+			{
+				$completetags = array_keys( qa_db_select_with_pending( qa_db_popular_tags_selectspec( 0, QA_DB_RETRIEVE_COMPLETE_TAGS) ) );
+			}
+			qa_set_up_tag_field( $qa_content, $field, 'tags', array(), array(), $completetags, qa_opt('page_size_ask_tags') );
+			//override field name from template
+			$field['label'] = $label;
+			qa_array_insert($qa_content['form']['fields'], null, array('tags' => $field));
 		}
 		
 	}; // END q2apro_tagexperts
