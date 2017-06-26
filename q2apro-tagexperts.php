@@ -81,7 +81,7 @@
 			$tagsQuestions = qa_db_read_all_values(
 							qa_db_query_sub('SELECT `postid` FROM `^posts`
 											 WHERE `type` = "Q"
-											 AND `tags` LIKE "'.$tag.'%" 
+											 AND FIND_IN_SET("'.$tag.'", `tags`) 
 											 AND acount > 0 
 											'));
 			
