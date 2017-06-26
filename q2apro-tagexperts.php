@@ -153,13 +153,14 @@
 			foreach($upvotecount as $userid=>$vcount)
 			{
 				$userhandle = qa_userid_to_handle($userid);
+				$user_full_name = self::get_user_full_name( $userhandle, false );
 				$qa_content['custom'] .= '
 				<tr>
 					<td>
 						'.$pos++.'
 					</td>
 					<td>
-						<a target="_blank" href="'.qa_path('user').'/'.$userhandle.'">'.$userhandle.'</a>
+						<a target="_blank" href="'.qa_path('user').'/'.$userhandle.'">'.$user_full_name.'</a>
 					</td>
 					<td>
 						<span class="thmbup">👍</span> '.$vcount.'
@@ -253,6 +254,28 @@
 			';
 			
 			return $qa_content;
+		}
+		
+		private function get_user_full_name( $handle )
+		{
+			$is_user_id = false;
+			$userprofiles = qa_db_select_with_pending(qa_db_user_profile_selectspec($handle,$is_user_id));
+			$userdisplayhandle = $handle;
+			
+			if( !isset($handle) )
+			{
+				return qa_lang('main/anonymous');
+			}
+			
+			if ( isset($userprofiles['name']) && !empty($userprofiles['name']) )
+			{
+				if(@$userprofiles['name'] != '')
+				{
+					$userdisplayhandle = @$userprofiles['name'];
+				}
+			}
+		
+			return $userdisplayhandle;
 		}
 		
 	}; // END q2apro_tagexperts
