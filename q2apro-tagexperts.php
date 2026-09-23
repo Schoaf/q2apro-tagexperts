@@ -75,15 +75,16 @@
 				return $qa_content;
 			}
 
-			$qa_content['title'] = 'Experts for <a target="_blank" href="'.qa_path('tag').'/'.$tag.'">"'.$tag.'"</a>';
-			
-			// read all questions with specified tag 
+			$tagHtml = qa_html($tag);
+			$qa_content['title'] = 'Experts for <a target="_blank" href="'.qa_path('tag').'/'.$tagHtml.'">"'.$tagHtml.'"</a>';
+
+			// read all questions with specified tag
 			$tagsQuestions = qa_db_read_all_values(
 							qa_db_query_sub('SELECT `postid` FROM `^posts`
 											 WHERE `type` = "Q"
-											 AND `tags` LIKE "'.$tag.'%" 
-											 AND acount > 0 
-											'));
+											 AND `tags` LIKE $
+											 AND acount > 0
+											', $tag.'%'));
 			
 			if(empty($tagsQuestions))
 			{
